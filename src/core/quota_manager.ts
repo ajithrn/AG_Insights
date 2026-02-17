@@ -14,6 +14,7 @@ export class QuotaManager {
   private updateCallback?: (snapshot: QuotaSnapshot) => void;
   private errorCallback?: (error: Error) => void;
   private pollingTimer?: NodeJS.Timeout;
+  private isFetching: boolean = false;
 
   init(port: number, csrfToken: string) {
     this.port = port;
@@ -42,7 +43,13 @@ export class QuotaManager {
   }
 
   async fetchQuota() {
+    if (this.isFetching) {
+      logger.debug('QuotaManager', 'Fetch already in progress, skipping...');
+      return;
+    }
+
     try {
+      this.isFetching = true;
       logger.debug('QuotaManager', 'Fetching quota...');
       const data = await this.request<ServerUserStatusResponse>(
         '/exa.language_server_pb.LanguageServerService/GetUserStatus', // Local API endpoint
@@ -75,6 +82,8 @@ export class QuotaManager {
       if (this.errorCallback) {
         this.errorCallback(error);
       }
+    } finally {
+      this.isFetching = false;
     }
   }
 

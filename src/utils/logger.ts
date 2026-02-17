@@ -12,11 +12,6 @@ class Logger {
     context.subscriptions.push(this.outputChannel);
   }
 
-  section(category: string, message: string) {
-    const line = '='.repeat(60);
-    this.log('INFO', category, `\n${line}\n${message}\n${line}`);
-  }
-
   info(category: string, message: string, data?: any) {
     this.log('INFO', category, message, data);
   }
@@ -27,14 +22,6 @@ class Logger {
 
   error(category: string, message: string, data?: any) {
     this.log('ERROR', category, message, data);
-  }
-
-  timeStart(label: string): () => void {
-    const start = Date.now();
-    return () => {
-      const duration = Date.now() - start;
-      this.debug('Timer', `${label} completed in ${duration}ms`);
-    };
   }
 
   show() {

@@ -1,0 +1,94 @@
+{
+  "name": "ag-insights",
+  "displayName": "AG Insights",
+  "description": "Monitor Antigravity token usage and quota insights",
+  "version": "1.1.10",
+  "publisher": "ajithrn",
+  "icon": "assets/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agInsights.refresh",
+        "title": "AG Insights: Refresh Quota",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agInsights.reconnect",
+        "title": "AG Insights: Reconnect to Antigravity Process"
+      },
+      {
+        "command": "agInsights.showLogs",
+        "title": "AG Insights: Show Logs"
+      }
+    ],
+    "configuration": {
+      "title": "AG Insights",
+      "properties": {
+        "agInsights.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/Disable quota monitoring"
+        },
+        "agInsights.pollingInterval": {
+          "type": "number",
+          "default": 300000,
+          "description": "Polling interval in milliseconds (default: 5 minutes)"
+        },
+        "agInsights.showPromptCredits": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show prompt credits in status bar (if available)"
+        },
+        "agInsights.pinnedModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "List of model IDs to show in status bar"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts",
+    "release": "node scripts/increment_version.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^8.0.0",
+    "typescript": "^5.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajithrn/AG_Insights.git"
+  },
+  "keywords": [
+    "antigravity",
+    "quota",
+    "monitor",
+    "ai",
+    "tokens",
+    "insights"
+  ],
+  "author": "Ajith R N",
+  "license": "MIT"
+}

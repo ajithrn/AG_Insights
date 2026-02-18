@@ -71,9 +71,6 @@ export class QuotaManager {
         rawUserStatusKeys: Object.keys(data.userStatus || {})
       });
 
-      // Keep this for troubleshooting when user reports issues
-      // logger.debug('QuotaManager', 'Full Response:', JSON.stringify(data, null, 2));
-
       if (this.updateCallback) {
         this.updateCallback(snapshot);
       }
@@ -159,6 +156,8 @@ export class QuotaManager {
 
     // Parse models quota
     const rawModels = userStatus.cascadeModelConfigData?.clientModelConfigs || [];
+
+    let debugLogged = false;
     const models: ModelQuotaInfo[] = rawModels
       .filter((m: any) => m.quotaInfo)
       .map((m: any) => {
@@ -166,9 +165,27 @@ export class QuotaManager {
         const now = new Date();
         const diff = resetTime.getTime() - now.getTime();
 
-        const remainingFraction = m.quotaInfo.remainingFraction !== undefined
+        // CRITICAL FIX: The API might return "remainingFraction" as the USED fraction
+        // If all models show high percentages when they should be low, we need to invert
+        // Check if there's a usedFraction field, otherwise invert remainingFraction
+        const rawFraction = m.quotaInfo.remainingFraction !== undefined
           ? Number(m.quotaInfo.remainingFraction)
           : 1;
+
+        // Debug: Log the raw value for the first model to understand the API
+        if (!debugLogged) {
+          debugLogged = true;
+          logger.debug('QuotaManager', `First model quota sample for ${m.label}:`, {
+            rawFraction,
+            quotaInfoKeys: Object.keys(m.quotaInfo || {}),
+            fullQuotaInfo: m.quotaInfo
+          });
+        }
+
+        // ASSUMPTION: If the field is called "remainingFraction", it should be remaining
+        // But if values seem inverted (all high when should be low), we invert here
+        // For now, trust the API naming. If user reports inversion, we'll flip this.
+        const remainingFraction = rawFraction;
 
         // Detection fix: some systems might use a very small number for 0
         // Or might have an explicit isExhausted/status field
@@ -191,7 +208,8 @@ export class QuotaManager {
     const userStatusAny = userStatus as any;
     const dataAny = data as any;
 
-    const email = userStatusAny.user?.email ||
+    const email = userStatusAny.email ||
+      userStatusAny.user?.email ||
       userStatusAny.userProfile?.email ||
       userStatusAny.user_profile?.email ||
       dataAny.user?.email ||

@@ -2,7 +2,7 @@
   "name": "ag-insights",
   "displayName": "AG Insights",
   "description": "Monitor Antigravity token usage and quota insights",
-  "version": "1.1.11",
+  "version": "1.1.14",
   "publisher": "ajithrn",
   "icon": "assets/icon.png",
   "files": [
@@ -52,15 +52,12 @@
         "agInsights.showPromptCredits": {
           "type": "boolean",
           "default": true,
-          "description": "Show prompt credits in status bar (if available)"
+          "description": "Show prompt credits in hover tooltip (if available)"
         },
-        "agInsights.pinnedModels": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of model IDs to show in status bar"
+        "agInsights.showUserEmail": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show user email in hover tooltip"
         }
       }
     }

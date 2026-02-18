@@ -76,6 +76,17 @@ function registerCommands(context: vscode.ExtensionContext) {
     })
   );
 
+  // Show Details Command (triggered by clicking status bar)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('agInsights.showDetails', () => {
+      logger.info('Command', 'Show details triggered');
+      if (lastSnapshot) {
+        statusBar.showDetailsPanel(lastSnapshot, configManager.getConfig());
+      } else {
+        vscode.window.showInformationMessage('AG Insights: No quota data available yet. Please wait...');
+      }
+    })
+  );
 
 }
 

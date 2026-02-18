@@ -63,7 +63,7 @@ export interface ExtensionConfig {
   enabled: boolean;
   pollingInterval: number;
   showPromptCredits: boolean;
-  pinnedModels: string[];
+  showUserEmail: boolean;
 }
 
 /** Process information for Antigravity language server */

@@ -12,9 +12,9 @@ export class StatusBarManager implements vscode.Disposable {
 
   constructor() {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    this.item.command = 'agInsights.refresh'; // Now clicking refreshes the quota
+    this.item.command = 'agInsights.showDetails'; // Clicking shows quota details
     this.item.text = '$(hubot) AG Insights';
-    this.item.tooltip = 'Initializing...';
+    this.item.tooltip = 'Click to view quota details';
     this.item.show();
   }
 
@@ -46,8 +46,8 @@ export class StatusBarManager implements vscode.Disposable {
     // Simple text display as requested
     this.item.text = '$(hubot) AG Insights';
 
-    // Rich tooltip with all details
-    this.item.tooltip = this.buildTooltip(snapshot);
+    // Rich tooltip with all details (respects config toggles)
+    this.item.tooltip = this.buildTooltip(snapshot, config);
 
     this.item.backgroundColor = undefined;
     this.item.show();
@@ -57,7 +57,7 @@ export class StatusBarManager implements vscode.Disposable {
     this.item.hide();
   }
 
-  private buildTooltip(snapshot: QuotaSnapshot): vscode.MarkdownString {
+  private buildTooltip(snapshot: QuotaSnapshot, config: ExtensionConfig): vscode.MarkdownString {
     const md = new vscode.MarkdownString();
     md.isTrusted = true;
     md.supportHtml = true;
@@ -66,12 +66,13 @@ export class StatusBarManager implements vscode.Disposable {
     // Header (Left Aligned)
     md.appendMarkdown('\n### $(hubot) AG User Insights\n');
 
-    if (snapshot.email) {
+    // User Email Section (respects toggle)
+    if (config.showUserEmail && snapshot.email) {
       md.appendMarkdown(`\n$(person) **User**: \`${snapshot.email}\`\n`);
     }
 
-    // Prompt Credits Section
-    if (snapshot.promptCredits) {
+    // Prompt Credits Section (respects toggle)
+    if (config.showPromptCredits && snapshot.promptCredits) {
       const { available, monthly, remainingPercentage } = snapshot.promptCredits;
       const pct = remainingPercentage.toFixed(0);
       md.appendMarkdown(`\n$(pulse) **Prompt Credits**: ${available} / ${monthly} (${pct}%)`);
@@ -125,5 +126,90 @@ export class StatusBarManager implements vscode.Disposable {
     const filledBars = Math.round((percentage / 100) * totalBars);
     const emptyBars = totalBars - filledBars;
     return '█'.repeat(filledBars) + '░'.repeat(emptyBars);
+  }
+
+  /**
+   * Show quota details in a quick pick panel
+   */
+  showDetailsPanel(snapshot: QuotaSnapshot, config: ExtensionConfig) {
+    const items: vscode.QuickPickItem[] = [];
+
+    // Header
+    items.push({
+      label: '$(hubot) AG User Insights',
+      kind: vscode.QuickPickItemKind.Separator
+    });
+
+    // User Email
+    if (config.showUserEmail && snapshot.email) {
+      items.push({
+        label: `$(person) User: ${snapshot.email}`,
+        description: ''
+      });
+    }
+
+    // Prompt Credits
+    if (config.showPromptCredits && snapshot.promptCredits) {
+      const { available, monthly, remainingPercentage } = snapshot.promptCredits;
+      const pct = remainingPercentage.toFixed(0);
+      items.push({
+        label: `$(pulse) Prompt Credits: ${available} / ${monthly}`,
+        description: `${pct}% remaining`
+      });
+    }
+
+    // Models Section
+    if (snapshot.models.length > 0) {
+      items.push({
+        label: 'Model Quotas',
+        kind: vscode.QuickPickItemKind.Separator
+      });
+
+      for (const model of snapshot.models) {
+        const pct = model.remainingPercentage?.toFixed(0) ?? '0';
+        const icon = (model.remainingPercentage ?? 0) > 40 ? '$(check)' : '$(warning)';
+        items.push({
+          label: `${icon} ${model.label}`,
+          description: `${pct}% remaining`,
+          detail: `Resets: ${model.timeUntilResetFormatted}`
+        });
+      }
+    }
+
+    // Actions Section
+    items.push({
+      label: 'Actions',
+      kind: vscode.QuickPickItemKind.Separator
+    });
+
+    items.push({
+      label: '$(refresh) Refresh Quota',
+      description: 'Fetch latest quota data'
+    });
+
+    items.push({
+      label: '$(gear) Settings',
+      description: 'Configure AG Insights'
+    });
+
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.items = items;
+    quickPick.placeholder = 'AG Insights - Quota Information';
+    quickPick.canSelectMany = false;
+
+    quickPick.onDidAccept(() => {
+      const selected = quickPick.selectedItems[0];
+      if (selected) {
+        if (selected.label.includes('Refresh Quota')) {
+          vscode.commands.executeCommand('agInsights.refresh');
+        } else if (selected.label.includes('Settings')) {
+          vscode.commands.executeCommand('workbench.action.openSettings', 'agInsights');
+        }
+      }
+      quickPick.hide();
+    });
+
+    quickPick.onDidHide(() => quickPick.dispose());
+    quickPick.show();
   }
 }

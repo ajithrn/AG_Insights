@@ -14,9 +14,9 @@ export class ConfigManager {
 
     return {
       enabled: config.get<boolean>('enabled') ?? true,
-      pollingInterval: (config.get<number>('pollingInterval') ?? 120) * 1000, // Convert to ms
+      pollingInterval: config.get<number>('pollingInterval') ?? 300000, // Default: 5 minutes in ms
       showPromptCredits: config.get<boolean>('showPromptCredits') ?? true,
-      pinnedModels: config.get<string[]>('pinnedModels') ?? [],
+      showUserEmail: config.get<boolean>('showUserEmail') ?? true,
     };
   }
 

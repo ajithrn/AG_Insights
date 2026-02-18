@@ -22,7 +22,7 @@ export class ProcessFinder {
 
     try {
       // Find language_server process
-      // Increase buffer size in case of many processes/long output
+      // Increase buffer size to 1MB to handle systems with many processes
       const { stdout } = await execAsync('ps aux | grep language_server | grep -v grep', { maxBuffer: 1024 * 1024 });
       logger.debug('ProcessFinder', 'Process list output length:', stdout.length);
 
@@ -33,9 +33,9 @@ export class ProcessFinder {
         // Try to find exact match for current workspace
         // Workspace ID format in args: file_Users_username_path_to_workspace
         // Convert local path to this format to search
-        const sanitizedPath = workspacePath.replace(/[\/\\:]/g, '_');
+        const sanitizedPath = workspacePath.replace(/[/\\:]/g, '_');
         // Also try just the folder name as fallback
-        const folderName = workspacePath.split(/[\\/]/).pop();
+        const folderName = workspacePath.split(/[/\\]/).pop();
 
         logger.debug('ProcessFinder', 'Searching for workspace match', { sanitizedPath, folderName });
 
@@ -146,8 +146,10 @@ export class ProcessFinder {
       }
 
       return Array.from(ports);
-    } catch (error) {
-      // lsof might fail if process doesn't belong to user or other integrity protection
+    } catch (error: any) {
+      // lsof might fail if process doesn't belong to user, due to System Integrity Protection,
+      // or if lsof is not available on the system
+      logger.debug('ProcessFinder', `lsof failed: ${error.message}`);
       return [];
     }
   }
@@ -240,6 +242,6 @@ export class ProcessFinder {
       return uuidMatch[0];
     }
 
-    return 'antigravity-quota-monitor';
+    return 'ag-insights';
   }
 }

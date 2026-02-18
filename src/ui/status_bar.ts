@@ -110,13 +110,13 @@ export class StatusBarManager implements vscode.Disposable {
       const indicator = pctValue > 40 ? '+' : '-';
 
       const bar = this.getProgressBar(pctValue);
-      const pctDisplay = m.remainingPercentage !== undefined ? `${m.remainingPercentage.toFixed(0)}%` : '0%';
+      const displayValue = `${pctValue.toFixed(0)}%`;
 
       // Pad model name for alignment (approximate width 25 chars)
       const paddedName = m.label.padEnd(25).substring(0, 25);
 
       // Add Reset time column
-      output += `${indicator} ${paddedName} | ${bar} | ${pctDisplay.padEnd(4)} | ${m.timeUntilResetFormatted}\n`;
+      output += `${indicator} ${paddedName} | ${bar} | ${displayValue.padEnd(4)} | ${m.timeUntilResetFormatted}\n`;
     }
     return output;
   }
@@ -166,11 +166,11 @@ export class StatusBarManager implements vscode.Disposable {
       });
 
       for (const model of snapshot.models) {
-        const pct = model.remainingPercentage?.toFixed(0) ?? '0';
+        const pct = `${model.remainingPercentage?.toFixed(0) ?? '0'}%`;
         const icon = (model.remainingPercentage ?? 0) > 40 ? '$(check)' : '$(warning)';
         items.push({
           label: `${icon} ${model.label}`,
-          description: `${pct}% remaining`,
+          description: `${pct} remaining`,
           detail: `Resets: ${model.timeUntilResetFormatted}`
         });
       }

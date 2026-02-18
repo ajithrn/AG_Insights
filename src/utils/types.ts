@@ -37,6 +37,7 @@ export interface ModelQuotaInfo {
   remainingFraction: number;
   remainingPercentage?: number;
   isExhausted: boolean;
+  isNA?: boolean;
   resetTime: Date;
   timeUntilReset: number;
   timeUntilResetFormatted: string;

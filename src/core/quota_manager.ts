@@ -166,11 +166,11 @@ export class QuotaManager {
         const diff = resetTime.getTime() - now.getTime();
 
         // CRITICAL FIX: The API might return "remainingFraction" as the USED fraction
-        // If all models show high percentages when they should be low, we need to invert
-        // Check if there's a usedFraction field, otherwise invert remainingFraction
+        // OR it might be missing entirely for models that haven't been used yet or are N/A.
+        // We default to 0 (empty) instead of 1 (full) to avoid misleading the user.
         const rawFraction = m.quotaInfo.remainingFraction !== undefined
           ? Number(m.quotaInfo.remainingFraction)
-          : 1;
+          : 0;
 
         // Debug: Log the raw value for the first model to understand the API
         if (!debugLogged) {
@@ -182,14 +182,9 @@ export class QuotaManager {
           });
         }
 
-        // ASSUMPTION: If the field is called "remainingFraction", it should be remaining
-        // But if values seem inverted (all high when should be low), we invert here
-        // For now, trust the API naming. If user reports inversion, we'll flip this.
-        const remainingFraction = rawFraction;
-
-        // Detection fix: some systems might use a very small number for 0
-        // Or might have an explicit isExhausted/status field
-        const isExhausted = remainingFraction <= 0.001 || m.quotaInfo.status === 'EXHAUSTED';
+        const remainingFraction = rawFraction !== undefined ? rawFraction : 0;
+        const isExhausted = (rawFraction !== undefined && rawFraction <= 0.001) || m.quotaInfo.status === 'EXHAUSTED';
+        const isNA = rawFraction === undefined && m.quotaInfo.status !== 'EXHAUSTED';
 
         return {
           label: m.label,
@@ -197,6 +192,7 @@ export class QuotaManager {
           remainingFraction,
           remainingPercentage: remainingFraction * 100,
           isExhausted,
+          isNA,
           resetTime,
           timeUntilReset: diff,
           timeUntilResetFormatted: this.formatTime(diff, resetTime),

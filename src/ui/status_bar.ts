@@ -22,11 +22,6 @@ export class StatusBarManager implements vscode.Disposable {
     this.item.dispose();
   }
 
-  showLoading() {
-    this.item.text = '$(sync~spin) AG Insights';
-    this.item.tooltip = 'Connecting to Antigravity process...';
-    this.item.show();
-  }
 
   showError(msg: string) {
     this.item.text = '$(error) AG Insights';
@@ -89,9 +84,10 @@ export class StatusBarManager implements vscode.Disposable {
     // Add padding after the table
     md.appendMarkdown('\n\n');
 
-    // Footer (Left Aligned)
-    md.appendMarkdown('[ $(refresh) REFRESH QUOTA ](command:agInsights.refresh) \u00A0\u00A0 [ $(gear) CONFIGURE ](command:workbench.action.openSettings?%22agInsights%22)');
-    md.appendMarkdown('\n'); // Extra footer padding
+    // Footer (Centered/Right aligned via table)
+    md.appendMarkdown('\n| | |\n|:---|---:|\n');
+    md.appendMarkdown(`| [ $(refresh) REFRESH ](command:agInsights.refresh) \u00A0 [ $(gear) CONFIG ](command:workbench.action.openSettings?%22agInsights%22) | $(clock) ${snapshot.timestamp.toLocaleTimeString()} |`);
+    md.appendMarkdown('\n');
 
     return md;
   }

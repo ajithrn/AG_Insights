@@ -49,12 +49,12 @@ export async function activate(context: vscode.ExtensionContext) {
 function registerCommands(context: vscode.ExtensionContext) {
   // Refresh Command
   context.subscriptions.push(
-    vscode.commands.registerCommand('agInsights.refresh', () => {
+    vscode.commands.registerCommand('agInsights.refresh', async () => {
       logger.info('Command', 'Manual refresh triggered');
       if (isInitialized) {
-        quotaManager.fetchQuota();
+        await quotaManager.fetchQuota();
       } else {
-        initializeExtension();
+        await initializeExtension();
       }
     })
   );
@@ -105,6 +105,18 @@ function setupEventListeners(context: vscode.ExtensionContext) {
   // Quota Errors
   quotaManager.onError((error) => {
     logger.error('Extension', 'Quota error:', error);
+
+    // Auto-reconnect on connection or auth errors
+    const msg = error.message || '';
+    if (msg.includes('ECONNREFUSED') || msg.includes('status 403') || msg.includes('status 404')) {
+      logger.info('Extension', 'Connection issue detected (Process restarted?), attempting to reconnect...');
+      isInitialized = false;
+      quotaManager.stopPolling();
+      // Add a small delay to avoid rapid loops if process is flapping
+      setTimeout(() => initializeExtension(), 1000);
+      return;
+    }
+
     statusBar.showError('Fetch failed');
   });
 
@@ -134,7 +146,6 @@ function setupEventListeners(context: vscode.ExtensionContext) {
 async function initializeExtension() {
   if (isInitialized) return;
 
-  statusBar.showLoading();
   logger.info('Extension', 'Initializing...');
 
   try {
